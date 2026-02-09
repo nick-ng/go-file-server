@@ -10,11 +10,30 @@ import (
 )
 
 func fileDownloadHandler(w http.ResponseWriter, r *http.Request) {
-	filePath := r.URL.Path[len("/files"):]
+	w.Header().Add("Access-Control-Allow-Origin", "*")
+	w.Header().Add("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+
+	if r.Method == http.MethodPost {
+		w.Write([]byte("Closing"))
+		os.Exit(0)
+	}
+
+	filePath := r.URL.Path[len("/"):]
 	if len(filePath) == 0 {
-		http.Error(w, "no file provided. usage is http://localhost:5911/<filename>", 400)
+		w.Write([]byte(`
+		<html>
+		<body>
+			<h1>File Server</h1>
+			<p>Usage is http://localhost:5911/&lt;filename&gt;</p>
+		<form method="post">
+		<button>Exit</button>
+		</body>
+		</form>
+		</html>
+		`))
 		return
 	}
+
 	_, fileName := filepath.Split(filePath)
 	file, err := os.Open(filePath)
 	if err != nil {
@@ -38,27 +57,8 @@ func fileDownloadHandler(w http.ResponseWriter, r *http.Request) {
 	http.ServeContent(w, r, fileName, fileStat.ModTime(), file)
 }
 
-func closeHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodPost {
-		w.Write([]byte("Closing"))
-		os.Exit(0)
-	}
-
-	w.Write([]byte(`
-		<html>
-		<body>
-		<form method="post">
-		<button>Close</button>
-		</body>
-		</form>
-		</html>
-		`))
-}
-
 func main() {
-	http.HandleFunc("/files", fileDownloadHandler)
-	http.HandleFunc("/close", closeHandler)
-	http.HandleFunc("/exit", closeHandler)
+	http.HandleFunc("/", fileDownloadHandler)
 	fmt.Println("Starting server on :5911")
 	if err := http.ListenAndServe(":5911", nil); err != nil {
 		log.Fatal(err)
