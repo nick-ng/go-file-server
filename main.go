@@ -10,7 +10,7 @@ import (
 )
 
 func fileDownloadHandler(w http.ResponseWriter, r *http.Request) {
-	filePath := r.URL.Path[len("/"):] // Assumes file path is after /download/
+	filePath := r.URL.Path[len("/files"):]
 	if len(filePath) == 0 {
 		http.Error(w, "no file provided. usage is http://localhost:5911/<filename>", 400)
 		return
@@ -38,8 +38,27 @@ func fileDownloadHandler(w http.ResponseWriter, r *http.Request) {
 	http.ServeContent(w, r, fileName, fileStat.ModTime(), file)
 }
 
+func closeHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		w.Write([]byte("Closing"))
+		os.Exit(0)
+	}
+
+	w.Write([]byte(`
+		<html>
+		<body>
+		<form method="post">
+		<button>Close</button>
+		</body>
+		</form>
+		</html>
+		`))
+}
+
 func main() {
-	http.HandleFunc("/", fileDownloadHandler)
+	http.HandleFunc("/files", fileDownloadHandler)
+	http.HandleFunc("/close", closeHandler)
+	http.HandleFunc("/exit", closeHandler)
 	fmt.Println("Starting server on :5911")
 	if err := http.ListenAndServe(":5911", nil); err != nil {
 		log.Fatal(err)
