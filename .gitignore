@@ -34,3 +34,5 @@ go.work.sum
 .vscode/launch.json
 
 *.mp4
+
+go-file-server

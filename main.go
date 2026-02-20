@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 )
 
 func fileDownloadHandler(w http.ResponseWriter, r *http.Request) {
@@ -31,6 +32,11 @@ func fileDownloadHandler(w http.ResponseWriter, r *http.Request) {
 		</form>
 		</html>
 		`))
+		return
+	}
+
+	if strings.ContainsAny(filePath, `/\?%*:|"<>,;= `) {
+		http.Error(w, "File not found.", 404)
 		return
 	}
 
